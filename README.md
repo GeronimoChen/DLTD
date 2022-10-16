@@ -5,4 +5,4 @@ The training and testing data are available at https://www.kaggle.com/datasets/g
 
 The output of the tardis simulation spectra are available at https://www.kaggle.com/datasets/geronimoestellarchen/dltd-data2 , please download them and store them into "1_Generate/ContSend/" folder. 
 
-
+The neural networks are available at https://www.kaggle.com/datasets/geronimoestellarchen/dltd-network , please download them and store them into "2_Train/MdSaver/110KLogML/" folder. 
