@@ -31,10 +31,9 @@ auxBig=np.load('../3_Predict/predOutMassive/'+snname+'/auxBig.npy')
 aerBig=np.load('../3_Predict/predOutMassive/'+snname+'/aerBig.npy')
 Xinput=np.load('../3_Predict/predOutMassive/'+snname+'/Xinput.npy')
 
-#I Guess You Will Make Some Changes Here... 
-homedir='/scratch/user/chenxingzhuo/YYTD/'
-cachedir='/scratch/user/chenxingzhuo/YYTD/2_RefitSpec/Cache/'
-specoutdir='/scratch/user/chenxingzhuo/YYTD/2_RefitSpec/SpecOutMassive2/'
+homedir='../1_Generate/ProberIG/'
+cachedir='Cache/'
+specoutdir='SpecOutMassive/'
 
 IGEdens=np.genfromtxt(homedir+'IGenhance/Density.dat',skip_header=1)
 IGEelem=np.genfromtxt(homedir+'IGenhance/IGenhanceElem.dat')
