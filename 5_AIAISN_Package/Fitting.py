@@ -14,6 +14,10 @@ from scipy.interpolate import interp1d
 from scipy.ndimage.filters import gaussian_filter1d
 
 snname=sys.argv[1]
+predOutDir=sys.argv[2]
+specoutdir=sys.argv[3]#'SpecOutMassive/'
+atomData=sys.argv[4]
+
 print('Start Running. ')
 
 solarLumi=3.846*10**33*u.erg/u.s
@@ -25,15 +29,14 @@ def Normalizer(spec,shortwave=6500,longwave=7500):
     if small>long:spec[:,1]=spec[:,1]/np.average(spec[long:small,1])
     return spec
 
-matBig=np.load('../3_Predict/predOutMassive/'+snname+'/matBig.npy')
-errBig=np.load('../3_Predict/predOutMassive/'+snname+'/errBig.npy')
-auxBig=np.load('../3_Predict/predOutMassive/'+snname+'/auxBig.npy')
-aerBig=np.load('../3_Predict/predOutMassive/'+snname+'/aerBig.npy')
-Xinput=np.load('../3_Predict/predOutMassive/'+snname+'/Xinput.npy')
+matBig=np.load(predOutDir+'/'+snname+'/matBig.npy')
+errBig=np.load(predOutDir+'/'+snname+'/errBig.npy')
+auxBig=np.load(predOutDir+'/'+snname+'/auxBig.npy')
+aerBig=np.load(predOutDir+'/'+snname+'/aerBig.npy')
+Xinput=np.load(predOutDir+'/'+snname+'/Xinput.npy')
 
 homedir='../1_Generate/ProberIG/'
 cachedir='Cache/'
-specoutdir='SpecOutMassive/'
 
 IGEdens=np.genfromtxt(homedir+'IGenhance/Density.dat',skip_header=1)
 IGEelem=np.genfromtxt(homedir+'IGenhance/IGenhanceElem.dat')
@@ -77,7 +80,7 @@ def densWriteFile(densData,fileName):
 def yamlWritter(lumi,expTime,velo,cacheFile,yamlTempFile=homedir+'/IGenhance/IGenhance.yml',):
     YamlHere=tardis.io.util.yaml_load_file(yamlTempFile)
     #And You Will Make Some Changes Here... 
-    YamlHere['atom_data']='/scratch/user/chenxingzhuo/TDAN/OneTrial/kurucz_cd23_chianti_H_He.h5'
+    YamlHere['atom_data']=atomData#'/scratch/user/chenxingzhuo/TDAN/OneTrial/kurucz_cd23_chianti_H_He.h5'
     
     YamlHere['montecarlo']['nthreads']=30
     YamlHere['montecarlo']['seed']=np.random.randint(36789212)
@@ -165,7 +168,7 @@ def CommandRunner(comListIn):
     with open('Cache/Runner_'+snname+'.in','w') as writter:
         writter.write(comListIn)
     #Probably you don't have a tamulauncher command that balances the load of multiple machines on a supercomputer, so please make some changes here.... 
-    com=os.popen('tamulauncher --norelease-resources --commands-pernode 2 '+'Cache/Runner_'+snname+'.in')
+    com=os.popen('chmod a+x Cache/Runner_'+snname+'.in && ./Cache/Runner_'+snname+'.in')
     print(com.read())
     #com=os.popen('tamulauncher --remove-logs '+'Cache/Runner_'+snname+'.in')
     #print(com.read())
@@ -183,10 +186,10 @@ def SpecCollector(FitFluxIn,pivotGOneIn,slopeGOneIn):
                 try:flux=np.load(cacheFile+'.flux.npy')
                 except:continue
                 FitFluxIn[auxIndexer[0],auxIndexer[1],specIndex]=flux
-    np.save(specoutdir+snname+'_FitFlux.npy',FitFluxIn)
+    np.save(specoutdir+'/'+snname+'_FitFlux.npy',FitFluxIn)
     return FitFluxIn
 
-if os.path.exists(specoutdir+snname+'_FitFlux.npy'):FitFlux=np.load(specoutdir+snname+'_FitFlux.npy')
+if os.path.exists(specoutdir+'/'+snname+'_FitFlux.npy'):FitFlux=np.load(specoutdir+'/'+snname+'_FitFlux.npy')
 else:FitFlux=np.zeros([matBig.shape[0],matBig.shape[1],matBig.shape[2],2000])*np.nan
 
 pivotCen=1.1

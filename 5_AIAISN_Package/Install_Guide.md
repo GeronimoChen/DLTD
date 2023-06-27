@@ -8,7 +8,9 @@ A Linux system is strongly recommended. The installation of the program will be 
 
 ## Installation
 
-The program requires
+The program requires following packages: 
+
+- tensorflow
 
 
 
@@ -23,7 +25,7 @@ We use kaggle platform to store the files which are too large to be uploaded to 
 
 ## Running a SN Fitting
 
-
+python Predictor.py SN2011fe ObserveExample/ predOutExample/ /home/gesa/SuperCode/GithubUpload/2_Train/MdSaver/110KLogML/ 0 0.00882 0.000804
 
 
 
