@@ -174,7 +174,7 @@ def MRNNSoftMaxESMake(CellNumber=7,outter=0):
     else:mu,sig=GaussianLayer(30,hardMax=False,name='zone_'+str(outter)+'_out')(dens3)
     model=Model(inputs=[INput,INput2],outputs=mu)
     print(model.summary())
-    opt=keras.optimizers.Adam(lr=0.00003,decay=1e-6)
+    opt=keras.optimizers.Adam(learning_rate=0.00003,decay=1e-6)
     model.compile(optimizer=opt,loss=custom_loss(sig))
     return model
 
