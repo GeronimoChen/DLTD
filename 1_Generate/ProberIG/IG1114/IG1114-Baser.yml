@@ -1,4 +1,4 @@
-atom_data: /scratch/user/chenxingzhuo/TardisKit/kurucz_cd23_chianti_H_He.h5
+atom_data: /home/gesa/SuperCode/kurucz_cd23_chianti_H_He.h5
 model:
   abundances:
     filename: Element.dat

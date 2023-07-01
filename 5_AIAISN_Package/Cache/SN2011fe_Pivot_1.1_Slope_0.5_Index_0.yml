@@ -1,0 +1,43 @@
+atom_data: /[path_to]/kurucz_cd23_chianti_H_He.h5
+model:
+  abundances:
+    filename: SN2011fe_Pivot_1.1_Slope_0.5_Index_0.elem.dat
+    filetype: simple_ascii
+    type: file
+  structure:
+    filename: SN2011fe_Pivot_1.1_Slope_0.5_Index_0.dens.dat
+    filetype: simple_ascii
+    type: file
+    v_inner_boundary: 10060.7890625 km/s
+    v_outer_boundary: 35900 km/s
+montecarlo:
+  convergence_strategy:
+    damping_constant: 1.0
+    fraction: 0.8
+    hold_iterations: 3
+    t_inner:
+      damping_constant: 1.0
+    threshold: 0.05
+    type: damped
+  iterations: 15
+  last_no_of_packets: 300000
+  no_of_packets: 30000
+  no_of_virtual_packets: 3
+  nthreads: 8
+  seed: 1002687
+plasma:
+  disable_electron_scattering: false
+  excitation: dilute-lte
+  ionization: nebular
+  line_interaction_type: macroatom
+  radiative_rates_type: detailed
+spectrum:
+  num: 2000
+  start: 2000 angstrom
+  stop: 10000 angstrom
+supernova:
+  luminosity_requested: 8.319917678833008 log_lsun
+  luminosity_wavelength_end: 7500 angstrom
+  luminosity_wavelength_start: 6500 angstrom
+  time_explosion: 12.349999999998545 day
+tardis_config_version: v1.0

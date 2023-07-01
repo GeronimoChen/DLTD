@@ -11,12 +11,12 @@ else:otherInfo="False"
 import tardis
 import numpy as np
 
-#homedir='/scratch/user/chenxingzhuo/DLTD/'
-#IGEdens=np.genfromtxt(homedir+'NewNewIGE/IGenhance/Density.dat',skip_header=1)
-#IGEelem=np.genfromtxt(homedir+'NewNewIGE/IGenhance/IGenhanceElem.dat')
-#IGEvelo=IGEdens[:,1]
+#YamlHere=tardis.yaml_load(inYaml)
+#YamlHere=tardis.io.util.yaml_load_file(inYaml)
+#YamlHere=tardis.io.config_reader.yaml_load_file(inYaml)
+YamlHere=tardis.io.config_reader.Configuration.from_yaml(inYaml)
 
-YamlHere=tardis.yaml_load(inYaml)
+
 runOut=tardis.run_tardis(YamlHere)
 flux=runOut.runner.spectrum_virtual.luminosity_density_lambda.value
 
