@@ -29,6 +29,12 @@ The command to install the AIAISN package is:
 pip install AIAISN
 '''
 
+or 
+
+'''
+pip install --upgrade --index-url https://test.pypi.org/simple/ AIAISN
+'''
+
 ## Download The Data
 
 We use kaggle platform to store the files which are too large to be uploaded to github. Before downloading the data, please: 
