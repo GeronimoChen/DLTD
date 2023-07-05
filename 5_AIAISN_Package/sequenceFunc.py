@@ -86,7 +86,7 @@ def windowSpec(spec):
     smFlux[np.isnan(smFlux)]=-1
     return np.array([wave,smFlux]).T
 def specListMaker(starTableDir,redshift,extMW=0,extHost=0,telNameGetter=False):
-    starTable=pd.read_csv(starTableDir+'starTableDen.csv')#'../ObserveSpectra/GoodSpec/SN2011fe/starTable.csv'
+    starTable=pd.read_csv(starTableDir+'starTable.csv')#'../ObserveSpectra/GoodSpec/SN2011fe/starTable.csv'
     X_snemo=[]
     timeCollect=[]
     telNameList=[]
@@ -170,7 +170,43 @@ def MRNNSoftMaxESMake(CellNumber=7,outter=0):
     model.compile(optimizer=opt,loss=custom_loss(sig))
     return model
 
-def readNetPredictSave(snName,specDir,predOutDir,networkDir,ebvHost,ebvMw,redshift):
+def BestSelecter(FitFluxIn,ObsSpecIn,matBigIn,auxBigIn,returnList=False):
+    pivotList=[]
+    pivotIndexList=[]
+    slopeList=[]
+    slopeIndexList=[]
+    chisqList=[]
+    for pivInd in range(FitFluxIn.shape[0]):
+        for sloInd in range(FitFluxIn.shape[1]):
+            fluxList=FitFluxIn[pivInd,sloInd]
+            if np.isnan(np.sum(fluxList)):continue
+            pivot=auxBigIn[pivInd,sloInd,0,3]
+            slope=auxBigIn[pivInd,sloInd,0,4]
+            pivotList.append(round(float(pivot),3))
+            slopeList.append(round(float(slope),3))
+            pivotIndexList.append(pivInd)
+            slopeIndexList.append(sloInd)
+            chisqOneSeq=0
+            for j in range(len(ObsSpecIn)):
+                fluxObs=ObsSpecIn[j][:,0]
+                fluxFit=fluxList[j]
+                mask=(fluxObs>0)
+                fluxObs=fluxObs[mask]
+                fluxFit=fluxFit[mask]
+                fluxObs=fluxObs/np.mean(fluxObs)
+                fluxFit=fluxFit/np.mean(fluxFit)
+                chisqOneSeq=chisqOneSeq+np.sum((fluxObs-fluxFit)**2)
+            chisqList.append(chisqOneSeq)
+    chisqList=np.array(chisqList)
+    minHere=np.nanargmin(chisqList)
+    pivotCen=pivotList[minHere]
+    slopeCen=slopeList[minHere]
+    if returnList==False:
+        return pivotCen,slopeCen
+    else:
+        return pivotCen,slopeCen,chisqList,pivotList,pivotIndexList,slopeList,slopeIndexList
+
+def bestSeqPredictor(snName,specDir,predOutDir,specOutDir,sequenceDir,networkDir,ebvHost,ebvMw,redshift):
     intermediateModels=[]
     for outter in range(7):
         valiLossList=[]
@@ -204,48 +240,33 @@ def readNetPredictSave(snName,specDir,predOutDir,networkDir,ebvHost,ebvMw,redshi
         sigma[:,0]=sigma[:,0]*YauxNorm[1,0]
         sigma[:,1]=sigma[:,1]*YauxNorm[1,2]
         return matExport,errExport,mu,sigma
-
+    FitFlux=np.load(specOutDir+'/'+snName+'_FitFlux.npy')
+    matBig=np.load(predOutDir+'/'+snName+'/matBig.npy')
+    errBig=np.load(predOutDir+'/'+snName+'/errBig.npy')
+    auxBig=np.load(predOutDir+'/'+snName+'/auxBig.npy')
+    aerBig=np.load(predOutDir+'/'+snName+'/aerBig.npy')
+    Xinput=np.load(predOutDir+'/'+snName+'/Xinput.npy')
+    pivot,slope,chisqList,pivotList,pivotIndexList,slopeList,slopeIndexList=BestSelecter(FitFlux,Xinput,matBig,auxBig,returnList=True)
+    
     X_snemo,timeCollect=specListMaker(specDir+'/'+snName+'/',redshift,extHost=ebvHost,extMW=ebvMw)
+    
+    timeNorm=(timeCollect-YauxNorm[0,1])/YauxNorm[1,1]
+    timeNorm=timeNorm.reshape([-1,1])
+    dens1Norm=(np.ones([len(X_snemo),1])*pivot-YauxNorm[0,3])/YauxNorm[1,3]
+    dens2Norm=(np.ones([len(X_snemo),1])*slope-YauxNorm[0,4])/YauxNorm[1,4]
+    auxIn=np.hstack([timeNorm,dens1Norm,dens2Norm])
+    matExport,errExport,mu,sigma=ModelPredictor(intermediateModels,X_snemo,auxIn)
+    
+    np.save(sequenceDir+'/'+snName+'_Elem.npy',10**matExport)
+    auxRun=np.vstack([mu[:,0],timeCollect,mu[:,1],pivot*np.ones(len(X_snemo)),slope*np.ones(len(X_snemo))]).T
+    np.save(sequenceDir+'/'+snName+'_Aux.npy',auxRun)
+    np.save(sequenceDir+'/'+snName+'_ElemErr.npy',errExport)
+    np.save(sequenceDir+'/'+snName+'_AuxErr.npy',sigma)
+    
+    return pivot,slope
 
-    densPivotRange=np.arange(0.2,2.01,0.1)
-    densSlopeRange=np.arange(0,2.01,0.1)
 
-    os.popen('mkdir -p '+predOutDir+'/'+snName)
-    matBig=np.zeros([len(densPivotRange),len(densSlopeRange),len(X_snemo),6,30])
-    errBig=np.zeros([len(densPivotRange),len(densSlopeRange),len(X_snemo),6,30])
-    auxBig=np.zeros([len(densPivotRange),len(densSlopeRange),len(X_snemo),5])
-    aerBig=np.zeros([len(densPivotRange),len(densSlopeRange),len(X_snemo),5])
-    for densNInd,densN in enumerate(densPivotRange):
-        for densDInd,densD in enumerate(densSlopeRange):
-            densN=float(round(densN,3))
-            densD=float(round(densD,3))
-            timeNorm=(timeCollect-YauxNorm[0,1])/YauxNorm[1,1]
-            timeNorm=timeNorm.reshape([-1,1])
-            dens1Norm=(np.ones([len(X_snemo),1])*densN-YauxNorm[0,3])/YauxNorm[1,3]
-            dens2Norm=(np.ones([len(X_snemo),1])*densD-YauxNorm[0,4])/YauxNorm[1,4]
-            auxIn=np.hstack([timeNorm,dens1Norm,dens2Norm])
-            matExport,errExport,mu,sigma=ModelPredictor(intermediateModels,X_snemo,auxIn)
 
-            auxList=np.zeros([len(X_snemo),5])
-            auxList[:,0]=mu[:,0]
-            auxList[:,2]=mu[:,1]
-            auxList[:,1]=timeCollect
-            auxList[:,3]=densN
-            auxList[:,4]=densD
-            sigList=np.zeros([len(X_snemo),5])
-            sigList[:,0]=sigma[:,0]
-            sigList[:,2]=sigma[:,1]
-            matBig[densNInd,densDInd]=matExport
-            errBig[densNInd,densDInd]=errExport
-            auxBig[densNInd,densDInd]=auxList
-            aerBig[densNInd,densDInd]=sigList
-    matBig=10**matBig
-    np.save(predOutDir+'/'+snName+'/matBig.npy',matBig)
-    np.save(predOutDir+'/'+snName+'/errBig.npy',errBig)
-    np.save(predOutDir+'/'+snName+'/auxBig.npy',auxBig)
-    np.save(predOutDir+'/'+snName+'/aerBig.npy',aerBig)
-    np.save(predOutDir+'/'+snName+'/Xinput.npy',X_snemo)
-    return matBig,errBig,auxBig,aerBig,X_snemo
 
 
 

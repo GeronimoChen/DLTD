@@ -61,9 +61,12 @@ The supernova spectra for AIAI prediction should be:
 
 All the spectra should be stored in a folder named by the supernova name. For example, a series of spectra from SN2011fe are stored in the "ObserveSpectra" folder. 
 
-Moreover, there should be a file called "starTableDen.csv" in the suparnova name folder. 
-In the "starTableDen.csv" file, there are three columns for the observation phases, the file name of the spectra, and the observing telescopes. 
+Moreover, there should be a file called "starTableDen.csv" in the suparnova name folder and a file called "starTable.csv". 
+In these two files, there are three columns for the observation phases, the file name of the spectra, and the observing telescopes. 
 An example is also given in the "ObserveSpectra/SN2011fe" folder.  
+
+The spectra listed in the "starTableDen.csv" file are used to determine the supernova density profile, so it is recommended to include the spectra with good photometric accuracy. 
+The spectra listed in the "starTable.csv" could include all the spectra of this specific supernova.  
 
 ### Predict the supernova element abundance
 
@@ -75,7 +78,7 @@ predictFunc.readNetPredictSave(snName='SN2011fe',specDir='ObserveExample/',predO
 '''
 
 "snName" is the name of the supernova, and should be matched to the folder name that stores the spectra of this supernova.  
-"specDir" is the folder name that stores the spectra.  
+"specDir" is the folder name that stores the spectra, the spectra listed in the "specDir/snName/starTableDen.csv" will be used.  
 "predOutDir" is the directory that stores the output element abundance, resampled observation spectra and other TARDIS running parameters.  
 "networkDir" is the directory that stores the network weight parameters and network training histories.  
 "ebvHost" is the host galaxy dust extinction value E(B-V).  
@@ -108,14 +111,58 @@ Therefore, to run multiple TARDIS simulation programs on different nodes in a su
 For example, when running this fitting function on Texas A&M University HPRC, the "mpiCommandor" can be set as "tamulauncher --norelease-resources --commands-pernode 2 " . 
 Please refer to your supercomputer user manual to configure the "mpiCommandor" input.  
 
+### Extract the best-fit density
 
+After the radiative transfer fitting process, this code will be used to find the best-fit density profile, and store the 
 
+'''
+from AIAISN import sequenceFunc
+sequenceFunc.bestSeqPredictor(snName='SN2011fe',specDir='ObserveExample/',predOutDir='predOutExample/',specOutDir='specOutExample/',sequenceDir='sequenceExample/',networkDir='../2_Train/MdSaver/110KLogML/',ebvHost=0,ebvMw=0.0088248,redshift=0.000804)
+'''
 
+"snName" is the name of the supernova, and should be matched to the folder name that stores the spectra of this supernova.  
+"specDir" is the folder name that stores the spectra, the spectra listed in the "specDir/snName/starTable.csv" will be used.  
+"predOutDir" is the directory that stores the output element abundance, resampled observation spectra and other TARDIS running parameters.  
+"specOutDir" is the directory that stores the results from the spectral fitting process.  
+"sequenceDir" is the directory that stores the predicted element abundance and other simulation parameters of all the spectra listed in the "specDir/snName/starTable.csv" file.  
+"networkDir" is the directory that stores the network weight parameters and network training histories.  
+"ebvHost" is the host galaxy dust extinction value E(B-V).  
+"ebvMw" is the milky way dust extinction value E(B-V).  
+"redshift" is the redshift of the supernova.  
 
+### The fitting spectral sequence
 
+The following code will be used to generate a simulation spectral time sequence of the supernova.  
 
+'''
+from AIAISN import sequenceSpecFunc
+sequenceSpecFunc.seqSpecMaker(snName='SN2011fe',sequenceDir='sequenceExample/',cacheDir='Cache/','/scratch/user/chenxingzhuo/TardisKit/kurucz_cd23_chianti_H_He.h5'.threadCount=8)
+'''
 
-python Predictor.py SN2011fe ObserveExample/ predOutExample/ /home/gesa/SuperCode/GithubUpload/2_Train/MdSaver/110KLogML/ 0 0.00882 0.000804
-python Fitting.py SN2011fe predOutExample/ specOutExample/ kurucz_cd23_chianti_H_He.h5
+"snName" is the name of supernova.  
+"sequenceDir" is the directory that stores the predicted element abundance and other simulation parameters of all the spectra listed in the "specDir/snName/starTable.csv" file.  
+"cacheDir" is the directory that stores the temporary files in TARDIS simulation.  
+"threadCount" is the number of threads used for a single TARDIS simulation task.  
+
+This code uses 1 node for calculation, I did not implement an API for multiple-node calculation. 
+
+## Result Analysis
+
+The final result will be stored in the directory "sequenceDir" as-mentioned.  
+
+The name ending with "\_Elem.npy" stores the element abundances. The dimension is (the number of spectra, the zones, the element number).  
+The name ending with "\_ElemErr.npy" stores the logarithmic error of the element abundances predicted by the neural network, and it shares a same dimension with the element abundances data.  
+The name ending with "\_Aux.npy" stores the TARDIS simulation parameters. There are 5 columns, the columns are (logarithmic luminosity in L_{sun}, time after explosion or phase + 19 days, photosphere velocity, density parameter A, density parameter B).  
+The name ending with "\_AuxErr.npy" stores the error of the TARDIS simulation parameters, but only the logarithmic luminosity and the photosphere velocity are valid.  
+The name ending with ".flux.npy" stores the TARDIS simulation spectra fit to the observation spectra.  
+
+For all the spectra, the wavelength grid is encoded in the program: 
+
+'''
+from AIAISN import fittingFunc
+fittingFunc.wave
+>>> array([10000.        ,  9980.03992016,  9960.15936255, ...,
+            2002.40288346,  2001.60128102,  2000.80032013])
+'''
 
 

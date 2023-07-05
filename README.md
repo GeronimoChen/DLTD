@@ -13,11 +13,13 @@ Please go through the folders "1\_Generate/", "2\_Train", "3\_Predict", "4\_Fit"
 
 ## To run a fitting for a new supernova
 
-Please go to the folder "5\_AIAISN\_Package/", and follow the instructions in the "Install\_Guide.md". You will need to install several packages to your python environment: tensorflow, TARDIS, dust\_extinction, astropy, etc. 
+Please go to the folder "5\_AIAISN\_Package/", and follow the instructions in the "Fitting\_Guide.md". You will need to install several packages to your python environment: tensorflow, TARDIS, dust\_extinction, astropy, etc. 
 
-## To access the fitting results already in the paper
+A python package is uploaded onto pypi, you can install the package using: 
 
-
+'''
+pip install AIAISN
+'''
 
 ## Some data are too large to store in github
 
